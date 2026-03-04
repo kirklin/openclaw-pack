@@ -1,0 +1,31 @@
+# source control
+.git
+.github
+.gitignore
+
+# docker specific
+Dockerfile
+.dockerignore
+compose.yaml
+docker-compose.yml
+
+# configs
+.env
+.env.local
+
+# ide
+.idea
+.vscode
+*.swp
+*.swo
+
+# local dev & builds
+node_modules
+dist
+build
+version.txt
+scripts/build-and-push.sh
+
+# documentation
+README.md
+LICENSE

@@ -1,0 +1,240 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.3.2",
+    "lastTouchedAt": "2026-03-02T12:00:00.000Z"
+  },
+  "update": {
+    "checkOnStart": false
+  },
+  "gateway": {
+    "bind": "lan",
+    "port": 18789,
+    "mode": "local",
+    "auth": {
+      "mode": "token",
+      "token": "dev-token-change-me"
+    },
+    "controlUi": {
+      "allowInsecureAuth": true,
+      "allowedOrigins": [
+        "http://localhost"
+      ],
+      "dangerouslyDisableDeviceAuth": false
+    }
+  },
+  "browser": {
+    "executablePath": "/usr/bin/chromium",
+    "defaultProfile": "openclaw",
+    "headless": true,
+    "noSandbox": true
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "default": {
+        "api": "openai-completions",
+        "baseUrl": "https://api.openai.com/v1",
+        "apiKey": "sk-your-default-api-key",
+        "models": [
+          {
+            "id": "gpt-5-nano",
+            "name": "gpt-5-nano",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 4096
+          }
+        ]
+      },
+      "claude-provider": {
+        "api": "anthropic-messages",
+        "baseUrl": "https://api.anthropic.com",
+        "apiKey": "sk-ant-your-api-key",
+        "models": [
+          {
+            "id": "claude-3-5-sonnet-20240620",
+            "name": "Claude 3.5 Sonnet",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "workspace": "/home/node/.openclaw/workspace",
+      "model": {
+        "primary": "default/gpt-5-nano"
+      },
+      "imageModel": {
+        "primary": "default/gpt-5-nano"
+      },
+      "subagents": {
+        "maxConcurrent": 8
+      },
+      "maxConcurrent": 4,
+      "elevatedDefault": "full",
+      "compaction": {
+        "mode": "safeguard"
+      }
+    }
+  },
+  "messages": {
+    "ackReactionScope": "group-mentions",
+    "tts": {
+      "edge": {
+        "voice": "zh-CN-XiaoxiaoNeural"
+      }
+    }
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto"
+  },
+  "channels": {
+    "dingtalk": {
+      "enabled": true,
+      "messageType": "markdown",
+      "clientId": "ding_client_id_example",
+      "clientSecret": "ding_client_secret_example",
+      "robotCode": "ding_client_id_example",
+      "corpId": "ding_corp_id_example",
+      "agentId": "123456",
+      "allowFrom": [
+        "*"
+      ],
+      "dmPolicy": "open",
+      "groupPolicy": "open",
+      "debug": false
+    },
+    "feishu": {
+      "enabled": true,
+      "accounts": {
+        "default": {
+          "botName": "OpenClaw Bot",
+          "appId": "cli_example_id",
+          "appSecret": "example_secret"
+        }
+      },
+      "dmPolicy": "pairing",
+      "groupPolicy": "open"
+    },
+    "wecom": {
+      "enabled": true,
+      "bot_example": {
+        "token": "WeComTokenExample",
+        "encodingAesKey": "WeComAESKeyExampleXXXXXXXXXXXXXXXXXX",
+        "adminUsers": [
+          "AdminUser"
+        ],
+        "agent": {
+          "corpId": "wwExampleCorpId",
+          "corpSecret": "ExampleCorpSecretXYZ",
+          "agentId": 1000000,
+          "token": "AgentTokenExample",
+          "encodingAesKey": "AgentAESKeyExample"
+        },
+        "webhooks": {
+          "alert-group": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxx-xxxx"
+        }
+      }
+    },
+    "qqbot": {
+      "enabled": true,
+      "appId": "100000000",
+      "clientSecret": "qqbot_secret_example"
+    },
+    "telegram": {
+      "botToken": "your-telegram-bot-token",
+      "streamMode": "partial",
+      "dmPolicy": "pairing",
+      "groupPolicy": "allowlist"
+    }
+  },
+  "plugins": {
+    "allow": [
+      "feishu",
+      "dingtalk",
+      "wecom",
+      "qqbot",
+      "telegram"
+    ],
+    "entries": {
+      "feishu": {
+        "enabled": true
+      },
+      "dingtalk": {
+        "enabled": true
+      },
+      "wecom": {
+        "enabled": true
+      },
+      "qqbot": {
+        "enabled": true
+      },
+      "telegram": {
+        "enabled": true
+      }
+    },
+    "installs": {
+      "feishu": {
+        "source": "npm",
+        "spec": "@openclaw/feishu",
+        "installPath": "/home/node/.openclaw/extensions/feishu",
+        "installedAt": "2026-03-04T12:00:00.000Z"
+      },
+      "wecom": {
+        "source": "npm",
+        "spec": "@sunnoy/wecom",
+        "installPath": "/home/node/.openclaw/extensions/wecom",
+        "installedAt": "2026-03-04T12:00:00.000Z"
+      },
+      "dingtalk": {
+        "source": "npm",
+        "spec": "https://github.com/soimy/clawdbot-channel-dingtalk.git",
+        "installPath": "/home/node/.openclaw/extensions/dingtalk",
+        "installedAt": "2026-03-04T12:00:00.000Z"
+      },
+      "qqbot": {
+        "source": "path",
+        "sourcePath": "/home/node/.openclaw/qqbot",
+        "installPath": "/home/node/.openclaw/extensions/qqbot",
+        "installedAt": "2026-03-04T12:00:00.000Z"
+      }
+    }
+  },
+  "memory": {
+    "backend": "qmd",
+    "qmd": {
+      "command": "/usr/local/bin/qmd",
+      "paths": [
+        {
+          "name": "workspace",
+          "path": "/home/node/.openclaw/workspace",
+          "pattern": "**/*.md"
+        }
+      ]
+    }
+  }
+}
