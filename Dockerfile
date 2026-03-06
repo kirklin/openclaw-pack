@@ -35,16 +35,13 @@ RUN chmod 4755 /usr/bin/chromium || true
 # 使用 npm 国内镜像源加速全局包安装，并锁定核心组件版本
 RUN npm config set registry https://registry.npmmirror.com && \
     npm install -g npm@latest && \
+    npm install -g pnpm@latest && \
     npm install -g openclaw@2026.3.2 @sunnoy/wecom@v1.5.1 @openclaw/feishu playwright && \
     npx playwright install chromium --with-deps && \
     rm -rf /root/.npm /root/.cache
 
 # 赋予 Node.js 监听低端口的权限
 RUN setcap 'cap_net_bind_service=+ep' /usr/local/bin/node
-
-# 注入 QMD (Quantum Memory Daemon) Mock 脚本
-RUN echo '#!/bin/bash\necho "QMD Memory Daemon Mock"' > /usr/local/bin/qmd && \
-    chmod +x /usr/local/bin/qmd
 
 # ==========================================
 # 3. 用户工作区初始化 (Workspace Setup)

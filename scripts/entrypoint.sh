@@ -75,20 +75,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
   "messages": { "ackReactionScope": "group-mentions", "tts": { "edge": { "voice": "zh-CN-XiaoxiaoNeural" } } },
   "commands": { "native": "auto", "nativeSkills": "auto" },
   "channels": {},
-  "plugins": { "entries": {}, "installs": {}, "allow": [] },
-  "memory": {
-    "backend": "qmd",
-    "qmd": {
-      "command": "/usr/local/bin/qmd",
-      "paths": [
-        {
-          "path": "'"$APP_WORKSPACE"'",
-          "name": "workspace",
-          "pattern": "**/*.md"
-        }
-      ]
-    }
-  }
+  "plugins": { "entries": {}, "installs": {}, "allow": [] }
 }
 ' > "$CONFIG_FILE"
 fi
