@@ -73,6 +73,18 @@ RUN git clone --depth 1 https://github.com/justlovemaki/qqbot.git qqbot && \
     npm install --omit=dev || true && \
     rm -rf .git
 
+# 插件 C: OpenViking 长效记忆 (memory-openviking)
+RUN git clone --depth 1 --filter=blob:none --sparse \
+        https://github.com/volcengine/OpenViking.git openviking-src && \
+    cd openviking-src && \
+    git sparse-checkout set examples/openclaw-memory-plugin && \
+    cd .. && \
+    mv openviking-src/examples/openclaw-memory-plugin memory-openviking && \
+    rm -rf openviking-src && \
+    cd memory-openviking && \
+    npm install --legacy-peer-deps && \
+    rm -rf .git
+
 # 全局清理 Node 用户的缓存
 RUN rm -rf /home/node/.npm /home/node/.cache
 

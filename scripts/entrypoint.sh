@@ -52,7 +52,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
     # 构造基础骨架，并通过 jq 将其格式化输出
     jq -n '
 {
-  "meta": { "lastTouchedVersion": "2026.2.14" },
+  "meta": { "lastTouchedVersion": "2026.3.11" },
   "update": { "checkOnStart": false },
   "browser": {
     "headless": true,
@@ -348,6 +348,51 @@ if [[ $wecom_configured -eq 1 ]]; then
         else . end)
     ' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
     PLUGINS_ENABLE_MAP["wecom"]=1
+fi
+
+# ---- 3.6 OpenViking 长效记忆插件 ----
+if [[ "${OPENVIKING_MEMORY_ENABLED,,}" == "true" || "$OPENVIKING_MEMORY_ENABLED" == "1" ]]; then
+    OV_BASE_URL="${OPENVIKING_BASE_URL:-http://openviking:1933}"
+    OV_API_KEY="${OPENVIKING_API_KEY:-}"
+    OV_AGENT_ID="${OPENVIKING_AGENT_ID:-}"
+    OV_AUTO_RECALL="${OPENVIKING_AUTO_RECALL:-true}"
+    OV_AUTO_CAPTURE="${OPENVIKING_AUTO_CAPTURE:-true}"
+
+    # 写入插件配置并设置记忆插槽
+    jq --arg baseUrl  "$OV_BASE_URL" \
+       --arg apiKey   "$OV_API_KEY" \
+       --arg agentId  "$OV_AGENT_ID" \
+       --argjson recall  "$OV_AUTO_RECALL" \
+       --argjson capture "$OV_AUTO_CAPTURE" \
+    '
+    .plugins.slots.memory = "memory-openviking" |
+    .plugins.entries["memory-openviking"] = {
+      "enabled": true,
+      "config": {
+        "mode": "remote",
+        "baseUrl": $baseUrl,
+        "apiKey":    $apiKey,
+        "agentId":   $agentId,
+        "autoRecall":  $recall,
+        "autoCapture": $capture
+      }
+    }
+    ' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
+
+    # 注册到 installs（供 openclaw 插件系统识别已安装的插件）
+    jq --arg now "$UTC_NOW" '
+       if .plugins.installs["memory-openviking"] == null then
+         .plugins.installs["memory-openviking"] = {
+           "source": "path",
+           "sourcePath": "/home/node/.openclaw/extensions/memory-openviking",
+           "installPath": "/home/node/.openclaw/extensions/memory-openviking",
+           "installedAt": $now
+         }
+       else . end
+    ' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
+
+    PLUGINS_ENABLE_MAP["memory-openviking"]=1
+    log_success "已配置: OpenViking 长效记忆 (remote -> ${OV_BASE_URL})"
 fi
 
 # ---- 合并激活的插件白名单 (allow) ----
