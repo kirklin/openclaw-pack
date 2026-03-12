@@ -36,7 +36,7 @@ RUN chmod 4755 /usr/bin/chromium || true
 RUN npm config set registry https://registry.npmmirror.com && \
     npm install -g npm@latest && \
     npm install -g pnpm@latest && \
-    npm install -g openclaw@2026.3.2 @sunnoy/wecom@v1.5.1 @openclaw/feishu playwright && \
+    npm install -g openclaw@latest @sunnoy/wecom @openclaw/feishu playwright && \
     npx playwright install chromium --with-deps && \
     rm -rf /root/.npm /root/.cache
 

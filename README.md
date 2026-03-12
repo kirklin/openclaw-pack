@@ -15,6 +15,19 @@
 
 ---
 
+## 0. 前置依赖 (安装 Docker)
+
+本项目依赖 Docker 容器环境。如果您是一台全新的服务器，或者还不知道什么是 Docker，请先安装。
+对于 Linux 独立服务器，您可以直接复制以下官方一键安装脚本执行：
+
+```bash
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+```
+*(Windows/Mac 用户请直接前去 [Docker 官网](https://www.docker.com/products/docker-desktop/) 下载安装 Docker Desktop 图形化版本)*
+
+---
+
 ## 快速开始
 
 ### 1. 准备配置
@@ -121,6 +134,28 @@ BOT_WECOM_MULTI_JSON={"bot_support":{"token":"T1","encodingAesKey":"K1","agent":
 BOT_FEISHU_APP_ID=cli_xxxxxxxxxx
 BOT_FEISHU_SECRET=yyyyyyyyyyyyyy
 ```
+
+### 7. 私聊配对 (Pairing) 认证步骤
+由于安全策略，默认配置的私聊可能采用了配对模式。当用户首次在飞书私聊机器人时，机器人会下发一个 8 位验证/配对码（全大写字母）。管理员需要通过命令完成认证：
+
+**1. 记录配对码**：用户在飞书里把机器人发来的 8 位配对码（或者截图）发给管理员。
+**2. 执行允许**：项目推荐是通过 `docker compose up -d` 启动的，所以我们推荐直接利用 `docker compose exec` 进入正在运行的服务所在的容器执行指令：
+
+*(可选) 查看待配对列表*：
+```bash
+docker compose exec openclaw-pack openclaw pairing list feishu
+```
+
+*用配对码通过该用户的请求*：
+```bash
+docker compose exec openclaw-pack openclaw pairing approve feishu <配对码>
+```
+例如：
+```bash
+docker compose exec openclaw-pack openclaw pairing approve feishu ABCDEFGH
+```
+
+> **注意**：通过后，该用户再在飞书里发消息即可正常收到回复。配对码约 1 小时有效，超时请让用户再给机器人发一条消息以获取新码，然后再执行 pairing approve。
 
 > 💡 **参考手册**：关于更详尽的权限配置 JSON、多账号高级配置示例，请参考官方插件文档：[OpenClaw Feishu Plugin Docs](https://github.com/openclaw/openclaw/blob/main/docs/channels/feishu.md)。
 

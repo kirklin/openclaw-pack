@@ -17,7 +17,8 @@
     "controlUi": {
       "allowInsecureAuth": true,
       "allowedOrigins": [
-        "http://localhost"
+        "http://localhost",
+        "http://127.0.0.1"
       ],
       "dangerouslyDisableDeviceAuth": false
     }
