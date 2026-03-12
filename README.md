@@ -9,6 +9,7 @@
 ### 核心特性
 
 - **聚合集成**：免配置，直接内置飞书、钉钉、QQ 机器人、企业微信四大国内主流 IM 平台通道。
+- **长效记忆**：内置 [OpenViking](https://github.com/volcengine/OpenViking) 记忆服务，自动记录对话关键信息，回复前主动回忆，让机器人真正"认识"用户。
 - **专业规范体系**：环境变量经过高度抽象归类。无论是大模型的 `LLM_BASE_URL` 或者是企微的多设备并发，一目了然。
 - **专业日志审计**：初始化环节拥有清晰的日志输出（`INFO`/`WARN`/`ERROR`/`SUCCESS`），一眼排错。
 - **自动权限修复**：启动自检数据卷 `UID:GID` 权限冲突，后台主动修复后再安全降权启动服务，彻底告别 `Permission Denied`。
@@ -81,6 +82,59 @@ docker compose logs -f openclaw-pack
 > <br/>[SUCCESS] 已配置: 飞书
 > <br/>[SUCCESS] 已配置: 企业微信多账号配置 (JSON)
 > <br/>[SUCCESS] 网关代理 (Gateway) 配置已刷新.
+
+---
+
+## 🧠 长效记忆（OpenViking）
+
+`openclaw-pack` 内置了 [OpenViking](https://github.com/volcengine/OpenViking) 记忆服务（独立容器）。启用后，机器人会自动**记住**对话中的重要信息，并在每次回复前**主动回忆**相关内容，做到真正的跨会话记忆。
+
+### 启用方式
+
+在 `.env` 中填写以下配置（重启后生效 `docker compose up -d`）：
+
+```bash
+# 1. 开启记忆功能
+OPENVIKING_MEMORY_ENABLED=true
+
+# 2. 填写供 OpenViking 使用的 API Key 和接口地址
+#    可直接复用你的主模型中转配置，留空时自动复用 LLM_API_KEY / LLM_BASE_URL
+OV_API_KEY=sk-xxxxxx
+OV_API_BASE=https://api.openai.com/v1
+```
+
+### 配置参数速查
+
+| 变量 | 说明 | 默认值 |
+|---|---|---|
+| `OPENVIKING_MEMORY_ENABLED` | 是否启用记忆功能 | `false` |
+| `OV_API_KEY` | 记忆服务 API Key | 复用 `LLM_API_KEY` |
+| `OV_API_BASE` | 记忆服务接口地址 | 复用 `LLM_BASE_URL` |
+| `OPENVIKING_EMBED_PROVIDER` | Embedding 供应商 (`openai` / `volcengine` / `jina`) | `openai` |
+| `OPENVIKING_EMBED_MODEL` | Embedding 模型名 | `text-embedding-3-small` |
+| `OPENVIKING_VLM_PROVIDER` | VLM 供应商 (`openai` / `volcengine`) | `openai` |
+| `OPENVIKING_VLM_MODEL` | VLM 模型名（用于理解图片） | `gpt-4o-mini` |
+| `OPENVIKING_AUTO_RECALL` | 每次回复前自动回忆 | `true` |
+| `OPENVIKING_AUTO_CAPTURE` | 自动提取并保存新记忆 | `true` |
+
+<details>
+<summary><b>使用火山引擎原生 Embedding（精度更高）</b></summary>
+
+如需使用官方 [VolcEngine Ark](https://ark.volcengine.com/) 提供的多模态 Embedding 模型：
+
+```bash
+OPENVIKING_EMBED_PROVIDER=volcengine
+OPENVIKING_EMBED_MODEL=doubao-embedding-vision-251215
+OPENVIKING_EMBED_DIM=1024
+OPENVIKING_VLM_PROVIDER=volcengine
+OPENVIKING_VLM_MODEL=doubao-seed-2-0-pro-260215
+# volcengine provider 必须使用真实的火山引擎 Ark API Key，不支持中转站
+OV_API_KEY=<your-ark-api-key>
+```
+
+> 注：`volcengine` provider 使用官方 SDK 直连，不走 `OV_API_BASE`，请确保使用真实的火山引擎 Key。
+
+</details>
 
 ---
 
