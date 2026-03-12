@@ -1,8 +1,25 @@
 version: "3.8"
 
 services:
+  openviking:
+    image: ghcr.io/volcengine/openviking:main
+    container_name: openviking
+    ports:
+      - "1933:1933"
+    volumes:
+      - ./openviking/ov.conf:/app/ov.conf
+      - openviking_data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:1933/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
   openclaw-pack:
     image: ${APP_IMAGE:-kirklin/openclaw-pack:latest}
+    depends_on:
+      - openviking
     container_name: openclaw-pack
     restart: unless-stopped
     init: true
@@ -93,3 +110,6 @@ services:
       BOT_WECOM_TOKEN: ${BOT_WECOM_TOKEN}
       BOT_WECOM_AES_KEY: ${BOT_WECOM_AES_KEY}
       BOT_WECOM_MULTI_JSON: ${BOT_WECOM_MULTI_JSON}
+
+volumes:
+  openviking_data:

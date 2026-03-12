@@ -384,6 +384,60 @@ if [[ -n "$OPENCLAW_GATEWAY_TOKEN" ]]; then
     log_success "网关代理 (Gateway) 配置已刷新."
 fi
 
+# ==============================================================================
+# 4.5. OpenViking Memory Integration
+# ==============================================================================
+PLUGIN_DEST="/home/node/.openclaw/extensions/memory-openviking"
+if [ ! -f "${PLUGIN_DEST}/package.json" ]; then
+    log_info "正在下载 memory-openviking 插件..."
+    mkdir -p "${PLUGIN_DEST}"
+    REPO="volcengine/OpenViking"
+    BRANCH="main"
+    gh_raw="https://raw.githubusercontent.com/${REPO}/${BRANCH}"
+    files=(
+        "index.ts" "config.ts" "client.ts" "process-manager.ts"
+        "memory-ranking.ts" "text-utils.ts" "openclaw.plugin.json"
+        "package.json" "package-lock.json" "tsconfig.json"
+    )
+    for name in "${files[@]}"; do
+        curl -fsSL --connect-timeout 15 -o "${PLUGIN_DEST}/${name}" "${gh_raw}/examples/openclaw-memory-plugin/${name}" || true
+    done
+    echo "node_modules/" > "${PLUGIN_DEST}/.gitignore"
+    log_info "正在安装 memory-openviking 依赖..."
+    (cd "${PLUGIN_DEST}" && npm install --no-audit --no-fund --omit=dev || true)
+fi
+
+# 禁用原生 memory-core (qmd) 及移除老旧的 memory 配置
+jq '.plugins.entries["memory-core"] = {"enabled": false} | del(.memory)' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
+
+# 启用 OpenViking 插件 (使用 path 源) 并设为默认记忆后端
+jq --arg now "$UTC_NOW" '
+   .plugins.entries["memory-openviking"] = {
+     "enabled": true,
+     "config": {
+       "mode": "remote",
+       "baseUrl": "http://openviking:1933",
+       "apiKey": "openclaw-secret"
+     }
+   } |
+   .plugins.installs["memory-openviking"] = {
+     "source": "path",
+     "sourcePath": "/home/node/.openclaw/extensions/memory-openviking",
+     "installPath": "/home/node/.openclaw/extensions/memory-openviking",
+     "installedAt": $now
+   } |
+   .plugins.slots.memory = "memory-openviking" |
+   del(.agents.defaults.memory) |
+   (if (.plugins.allow | index("memory-openviking") == null) then .plugins.allow += ["memory-openviking"] else . end)
+' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
+
+# 将 memory-openviking 添加到 allow 列表
+jq 'if (.plugins.allow | index("memory-openviking") == null) then .plugins.allow += ["memory-openviking"] else . end' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
+# 移除 memory-core 从 allow 列表 (防止被加载)
+jq '.plugins.allow = [.plugins.allow[] | select(. != "memory-core")]' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
+
+log_success "已配置: OpenViking 长程记忆插件并禁用原生 qmd"
+
 # 记录更新时间戳并保存
 jq --arg now "$UTC_NOW" '.meta.lastTouchedAt = $now' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
 rm -f "$tmp_file"
