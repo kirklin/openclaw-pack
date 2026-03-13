@@ -287,3 +287,29 @@ WECOM_ENCODING_AES_KEY=你的EncodingAESKeyxxxxxxxxxx
 </details>
 
 ---
+
+## 备份与持久化
+
+所有核心数据均保存在 `APP_DATA_DIR`（默认为 `~/.openclaw`）目录下。为了保证您的设置不丢失，请定期备份以下路径：
+
+- `openclaw.json`：全量核心配置。
+- `credentials/`：IM 平台的 Token 和认证状态。
+- `agents/`：所有 Agent 的历史会话记录（Transcript）。
+- `workspace/`：您的自定义提示词（Prompts）、Skills 和记忆。
+
+> [!TIP]
+> 建议将 `~/.openclaw` 目录初始化为一个私有的 Git 仓库，以便跟踪配置变更和备份。
+
+---
+
+## Linux 用户说明 (Lingering)
+
+如果您在 Linux 服务器上以普通用户身份使用 Docker，系统在您注销登录后可能会自动清理用户服务（或停止正在运行的网关）。为了确保机器人 24/7 在线，建议开启 `lingering`：
+
+```bash
+sudo loginctl enable-linger $USER
+```
+
+对于常驻服务器，如果依然遇到无法正常启动的问题，请检查 Docker 服务是否设为开机启动。
+
+---

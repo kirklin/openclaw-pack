@@ -490,7 +490,12 @@ rm -f "$tmp_file"
 # 6. 二次权限修复与服务启动
 # ==============================================================================
 if [ "$(id -u)" -eq 0 ]; then
+    # 核心数据卷归 node 用户所有，确保可以写入会话、凭证等
     chown -R node:node "$APP_DATA_DIR" || true
+    # 插件目录归 root 所有，以通过 OpenClaw 的 "suspicious ownership" 安全检查
+    if [ -d "$APP_DATA_DIR/extensions" ]; then
+        chown -R root:root "$APP_DATA_DIR/extensions" || true
+    fi
 fi
 
 log_info "=== Kirklin's openclaw-pack 初始化完毕 ==="

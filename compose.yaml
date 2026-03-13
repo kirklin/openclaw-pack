@@ -59,11 +59,19 @@ services:
       - SETGID
       - DAC_OVERRIDE
     user: ${APP_RUN_USER:-0:0}
+    healthcheck:
+      test: ["CMD", "openclaw", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     ports:
       - "${OPENCLAW_GATEWAY_PORT:-18789}:18789"
       - "${OPENCLAW_BRIDGE_PORT:-18790}:18790"
     volumes:
+      # 核心配置与数据持久化 (Credentials, Sessions, Logs)
       - ${APP_DATA_DIR:-~/.openclaw}:/home/node/.openclaw
+      # 插件运行时隔离目录
       - /home/node/.openclaw/extensions
     environment:
       # Core Env
