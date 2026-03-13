@@ -403,7 +403,60 @@ if [[ "$ALLOW_ARRAY" != "[]" ]]; then
 fi
 
 # ==============================================================================
-# 4. Gateway 网关与高级配置
+# 4. Tools 工具策略配置
+# ==============================================================================
+# 控制 Agent 可使用的工具集。默认策略：
+#   profile=coding (fs/runtime/sessions/memory) + browser + group:web + image
+#   deny canvas/nodes（容器内无 Canvas/macOS 节点）
+#   loopDetection 开启，防止 Agent 死循环
+TOOLS_PROFILE="${OPENCLAW_TOOLS_PROFILE:-coding}"
+
+# 构建 allow 数组（从环境变量 OPENCLAW_TOOLS_ALLOW 解析逗号分隔列表，默认内置）
+TOOLS_ALLOW_DEFAULT='["group:web","browser","image"]'
+if [[ -n "$OPENCLAW_TOOLS_ALLOW" ]]; then
+    TOOLS_ALLOW=$(echo "$OPENCLAW_TOOLS_ALLOW" | tr ',' '\n' | jq -Rsc 'split("\n") | map(select(length>0))')
+else
+    TOOLS_ALLOW="$TOOLS_ALLOW_DEFAULT"
+fi
+
+# 构建 deny 数组（默认禁用 canvas/nodes，可通过 OPENCLAW_TOOLS_DENY 覆盖）
+TOOLS_DENY_DEFAULT='["canvas","nodes"]'
+if [[ -n "$OPENCLAW_TOOLS_DENY" ]]; then
+    TOOLS_DENY=$(echo "$OPENCLAW_TOOLS_DENY" | tr ',' '\n' | jq -Rsc 'split("\n") | map(select(length>0))')
+else
+    TOOLS_DENY="$TOOLS_DENY_DEFAULT"
+fi
+
+# loopDetection 开关（默认 true）
+LOOP_DETECTION="${OPENCLAW_TOOLS_LOOP_DETECTION:-true}"
+
+jq --arg profile "$TOOLS_PROFILE" \
+   --argjson allow  "$TOOLS_ALLOW" \
+   --argjson deny   "$TOOLS_DENY" \
+   --argjson loopEnabled "$LOOP_DETECTION" \
+   '
+   .tools = (.tools // {}) * {
+     "profile": $profile,
+     "allow":   $allow,
+     "deny":    $deny,
+     "loopDetection": {
+       "enabled":                      $loopEnabled,
+       "warningThreshold":             10,
+       "criticalThreshold":            20,
+       "globalCircuitBreakerThreshold": 30,
+       "historySize":                  30,
+       "detectors": {
+         "genericRepeat":        true,
+         "knownPollNoProgress":  true,
+         "pingPong":             true
+       }
+     }
+   }
+   ' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
+log_success "工具策略 (Tools) 已配置: profile=${TOOLS_PROFILE}, deny=${TOOLS_DENY}"
+
+# ==============================================================================
+# 5. Gateway 网关与高级配置
 # ==============================================================================
 if [[ -n "$OPENCLAW_GATEWAY_TOKEN" ]]; then
     jq --arg port "${OPENCLAW_GATEWAY_PORT:-18789}" \
@@ -434,7 +487,7 @@ jq --arg now "$UTC_NOW" '.meta.lastTouchedAt = $now' "$CONFIG_FILE" > "$tmp_file
 rm -f "$tmp_file"
 
 # ==============================================================================
-# 5. 二次权限修复与服务启动
+# 6. 二次权限修复与服务启动
 # ==============================================================================
 if [ "$(id -u)" -eq 0 ]; then
     chown -R node:node "$APP_DATA_DIR" || true
