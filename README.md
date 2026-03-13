@@ -82,6 +82,34 @@ docker compose logs -f openclaw-pack
 > <br/>[SUCCESS] 已配置: 飞书
 > <br/>[SUCCESS] 已配置: 企业微信多账号配置 (JSON)
 > <br/>[SUCCESS] 网关代理 (Gateway) 配置已刷新.
+> <br/>[SUCCESS] 工具策略 (Tools) 已配置: profile=coding, deny=["canvas","nodes"]
+
+---
+
+## 更新配置与重启
+
+当您修改了 `.env` 文件或 `compose.yaml`，需要重新应用配置：
+
+### 1. 正常重启（应用环境变量）
+如果您只是修改了 API Key、模型 ID 等环境变量，直接重启即可：
+```bash
+docker compose up -d
+```
+
+### 2. 强制刷新配置（重新生成 `openclaw.json`）
+由于初始化脚本只在 `openclaw.json` 不存在时生成基础配置，如果您希望脚本**完全重新扫描**环境变量并生成一份全新的配置文件（例如切换了全套工具策略），请执行：
+
+```bash
+# 删除旧的自动生成配置，并重新启动
+rm -fv ~/.openclaw/openclaw.json && docker compose up -d
+```
+
+### 3. 应用脚本变更（重新构建镜像）
+如果您修改了 `scripts/entrypoint.sh` 或者 `Dockerfile` 本身，通常是因为项目更新。此时需要添加 `--build` 参数来重新编译：
+
+```bash
+docker compose up -d --build
+```
 
 ---
 
