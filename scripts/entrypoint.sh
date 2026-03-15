@@ -226,12 +226,28 @@ fi
 if [[ -n "$BOT_FEISHU_APP_ID" && -n "$BOT_FEISHU_SECRET" ]]; then
     jq --arg id "$BOT_FEISHU_APP_ID" --arg sec "$BOT_FEISHU_SECRET" \
        --arg name "${BOT_FEISHU_BOT_NAME:-OpenClaw Bot}" \
-       --arg domain "${BOT_FEISHU_DOMAIN:-}" \
+       --arg domain "${BOT_FEISHU_DOMAIN:-feishu}" \
+       --arg mode "${BOT_FEISHU_CONNECTION_MODE:-websocket}" \
+       --arg streaming "${BOT_FEISHU_STREAMING:-true}" \
+       --arg dm "${BOT_FEISHU_DM_POLICY:-pairing}" \
+       --arg group "${BOT_FEISHU_GROUP_POLICY:-open}" \
+       --arg typing "${BOT_FEISHU_TYPING_INDICATOR:-true}" \
+       --arg reaction "${BOT_FEISHU_REACTION_NOTIFICATIONS:-own}" \
+       --arg resolve "${BOT_FEISHU_RESOLVE_NAMES:-true}" \
+       --arg reply "${BOT_FEISHU_REPLY_TO_MODE:-all}" \
        '
        .channels.feishu = {
-         "enabled": true, "dmPolicy": "pairing", "groupPolicy": "open",
+         "enabled": true,
+         "connectionMode": $mode,
+         "streaming": ($streaming | ascii_downcase == "true"),
+         "dmPolicy": $dm,
+         "groupPolicy": $group,
+         "typingIndicator": ($typing | ascii_downcase == "true"),
+         "resolveSenderNames": ($resolve | ascii_downcase == "true"),
+         "reactionNotifications": $reaction,
+         "replyToMode": $reply,
          "accounts": {
-           "default": ({ "appId": $id, "appSecret": $sec, "botName": $name } + (if $domain!="" then {"domain":$domain} else {} end))
+           "default": { "appId": $id, "appSecret": $sec, "botName": $name, "domain": $domain }
          }
        }' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
     
@@ -242,7 +258,7 @@ if [[ -n "$BOT_FEISHU_APP_ID" && -n "$BOT_FEISHU_SECRET" ]]; then
         else . end)
     ' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
     PLUGINS_ENABLE_MAP["feishu"]=1
-    log_success "已配置: 飞书"
+    log_success "已配置: 飞书 (Mode: ${BOT_FEISHU_CONNECTION_MODE:-websocket})"
 fi
 
 # ---- 3.3 钉钉 (Dingtalk) ----

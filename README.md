@@ -213,8 +213,21 @@ BOT_WECOM_MULTI_JSON={"bot_support":{"token":"T1","encodingAesKey":"K1","agent":
 
 ### 6. 环境变量配置 (`.env`)
 ```bash
+# 核心凭证
 BOT_FEISHU_APP_ID=cli_xxxxxxxxxx
 BOT_FEISHU_SECRET=yyyyyyyyyyyyyy
+BOT_FEISHU_BOT_NAME=我的AI助手
+# API 域名: feishu (国内) 或 lark (国际)
+BOT_FEISHU_DOMAIN=feishu
+
+# 高级选项
+BOT_FEISHU_CONNECTION_MODE=websocket  # 连接模式: websocket (推荐) 或 webhook
+BOT_FEISHU_STREAMING=true             # 启用流式输出 (交互式卡片显示生成进度)
+BOT_FEISHU_DM_POLICY=pairing          # 私聊策略: pairing, allowlist, open, disabled
+BOT_FEISHU_GROUP_POLICY=open          # 群组策略: open, allowlist, disabled
+BOT_FEISHU_TYPING_INDICATOR=true      # 是否发送“正在输入”状态
+BOT_FEISHU_RESOLVE_NAMES=true         # 是否解析发送者名称
+BOT_FEISHU_REPLY_TO_MODE=all          # 引用回复模式: all, first, off
 ```
 
 ### 7. 私聊配对 (Pairing) 认证步骤

@@ -131,15 +131,21 @@
     },
     "feishu": {
       "enabled": true,
+      "connectionMode": "websocket",
+      "streaming": true,
+      "dmPolicy": "pairing",
+      "groupPolicy": "open",
+      "typingIndicator": true,
+      "resolveSenderNames": true,
+      "reactionNotifications": "own",
+      "replyToMode": "all",
       "accounts": {
         "default": {
           "botName": "OpenClaw Bot",
           "appId": "cli_example_id",
           "appSecret": "example_secret"
         }
-      },
-      "dmPolicy": "pairing",
-      "groupPolicy": "open"
+      }
     },
     "wecom": {
       "enabled": true,
