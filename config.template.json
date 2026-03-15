@@ -184,10 +184,10 @@
     "allow": [
       "*"
     ],
-    "deny": []
-  },
-  "sessions": {
-    "visibility": "all"
+    "deny": [],
+    "sessions": {
+      "visibility": "all"
+    }
   },
   "plugins": {
     "allow": [

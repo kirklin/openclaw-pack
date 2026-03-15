@@ -74,8 +74,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
   },
   "messages": { "ackReactionScope": "group-mentions", "tts": { "edge": { "voice": "zh-CN-XiaoxiaoNeural" } } },
   "commands": { "native": "auto", "nativeSkills": "auto" },
-  "tools": { "profile": "full", "allow": ["*"], "deny": [] },
-  "sessions": { "visibility": "all" },
+  "tools": { "profile": "full", "allow": ["*"], "deny": [], "sessions": { "visibility": "all" } },
   "channels": {},
   "plugins": { "entries": {}, "installs": {}, "allow": [] }
 }
@@ -461,6 +460,9 @@ jq --arg profile "$TOOLS_PROFILE" \
      "profile": $profile,
      "allow":   $allow,
      "deny":    $deny,
+     "sessions": {
+       "visibility": $visibility
+     },
      "loopDetection": {
        "enabled":                      $loopEnabled,
        "warningThreshold":             10,
@@ -473,10 +475,7 @@ jq --arg profile "$TOOLS_PROFILE" \
          "pingPong":             true
        }
      }
-   } |
-   .sessions = (.sessions // {}) * {
-     "visibility": $visibility
-   }
+   } | del(.sessions)
    ' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
 log_success "工具与会话策略已配置: profile=${TOOLS_PROFILE}, deny=${TOOLS_DENY}, visibility=${SESSIONS_VISIBILITY}"
 
