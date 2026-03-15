@@ -74,6 +74,8 @@ if [ ! -f "$CONFIG_FILE" ]; then
   },
   "messages": { "ackReactionScope": "group-mentions", "tts": { "edge": { "voice": "zh-CN-XiaoxiaoNeural" } } },
   "commands": { "native": "auto", "nativeSkills": "auto" },
+  "tools": { "profile": "full", "allow": ["*"], "deny": [] },
+  "sessions": { "visibility": "all" },
   "channels": {},
   "plugins": { "entries": {}, "installs": {}, "allow": [] }
 }
@@ -425,10 +427,10 @@ fi
 #   profile=coding (fs/runtime/sessions/memory) + browser + group:web + image
 #   deny canvas/nodes（容器内无 Canvas/macOS 节点）
 #   loopDetection 开启，防止 Agent 死循环
-TOOLS_PROFILE="${OPENCLAW_TOOLS_PROFILE:-coding}"
+TOOLS_PROFILE="${OPENCLAW_TOOLS_PROFILE:-full}"
 
 # 构建 allow 数组（从环境变量 OPENCLAW_TOOLS_ALLOW 解析逗号分隔列表，默认内置）
-TOOLS_ALLOW_DEFAULT='["group:web","browser","image"]'
+TOOLS_ALLOW_DEFAULT='["*"]'
 if [[ -n "$OPENCLAW_TOOLS_ALLOW" ]]; then
     TOOLS_ALLOW=$(echo "$OPENCLAW_TOOLS_ALLOW" | tr ',' '\n' | jq -Rsc 'split("\n") | map(select(length>0))')
 else
@@ -443,12 +445,16 @@ else
     TOOLS_DENY="$TOOLS_DENY_DEFAULT"
 fi
 
+# Session 可见性配置
+SESSIONS_VISIBILITY="${OPENCLAW_SESSIONS_VISIBILITY:-all}"
+
 # loopDetection 开关（默认 true）
 LOOP_DETECTION="${OPENCLAW_TOOLS_LOOP_DETECTION:-true}"
 
 jq --arg profile "$TOOLS_PROFILE" \
    --argjson allow  "$TOOLS_ALLOW" \
    --argjson deny   "$TOOLS_DENY" \
+   --arg visibility "$SESSIONS_VISIBILITY" \
    --argjson loopEnabled "$LOOP_DETECTION" \
    '
    .tools = (.tools // {}) * {
@@ -467,9 +473,12 @@ jq --arg profile "$TOOLS_PROFILE" \
          "pingPong":             true
        }
      }
+   } |
+   .sessions = (.sessions // {}) * {
+     "visibility": $visibility
    }
    ' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
-log_success "工具策略 (Tools) 已配置: profile=${TOOLS_PROFILE}, deny=${TOOLS_DENY}"
+log_success "工具与会话策略已配置: profile=${TOOLS_PROFILE}, deny=${TOOLS_DENY}, visibility=${SESSIONS_VISIBILITY}"
 
 # ==============================================================================
 # 5. Gateway 网关与高级配置

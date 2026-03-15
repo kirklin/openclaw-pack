@@ -179,6 +179,16 @@
       "groupPolicy": "allowlist"
     }
   },
+  "tools": {
+    "profile": "full",
+    "allow": [
+      "*"
+    ],
+    "deny": []
+  },
+  "sessions": {
+    "visibility": "all"
+  },
   "plugins": {
     "allow": [
       "feishu",
