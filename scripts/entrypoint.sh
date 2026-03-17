@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# Kirklin's openclaw-pack Init Script (Bash + jq)
+# Kirklin's openclaw-pack Init Script
 # ==============================================================================
 
 set -e
@@ -23,6 +23,28 @@ NODE_GID="$(id -g node)"
 
 # 预创建挂载目录
 mkdir -p "$APP_DATA_DIR/extensions" "$APP_WORKSPACE"
+
+# --- Workspace Initialization & Overwrite ---
+# 如果 OVERWRITE_WORKSPACE 为 true (默认)，则从模板覆盖
+OVERWRITE_WS="${OVERWRITE_WORKSPACE:-true}"
+WORKSPACE_TEMPLATE="/home/node/workspace-template"
+INIT_MARKER="$APP_DATA_DIR/.workspace_initialized"
+
+if [ ! -f "$INIT_MARKER" ] || [[ "${OVERWRITE_WS,,}" == "force" ]]; then
+    if [[ "${OVERWRITE_WS,,}" == "true" || "$OVERWRITE_WS" == "1" || "${OVERWRITE_WS,,}" == "force" ]]; then
+        if [ -d "$WORKSPACE_TEMPLATE" ]; then
+            log_info "正在初始化/检测到强制覆盖，同步工作区内容 ($APP_WORKSPACE)..."
+            # 使用 cp -rf 覆盖，但也保留可能存在的 git 目录（如果用户映射了自己的 git 库）
+            cp -rf "$WORKSPACE_TEMPLATE"/. "$APP_WORKSPACE/"
+            touch "$INIT_MARKER"
+            log_success "工作区内容同步完成"
+        else
+            log_warn "未发现工作区模板目录: $WORKSPACE_TEMPLATE"
+        fi
+    fi
+else
+    log_info "工作区已存在初始化标记，跳过自动覆盖 (如欲强制同步请设置环境变量 OVERWRITE_WORKSPACE=force)"
+fi
 
 # --- Permissions Check ---
 if [ "$(id -u)" -eq 0 ]; then

@@ -48,8 +48,12 @@ RUN setcap 'cap_net_bind_service=+ep' /usr/local/bin/node
 # ==========================================
 # 创建目录并赋予 node 用户权限，避免后续权限错乱
 RUN mkdir -p /home/node/.openclaw/workspace \
-             /home/node/.openclaw/extensions && \
-    chown -R node:node /home/node/.openclaw
+             /home/node/.openclaw/extensions \
+             /home/node/workspace-template && \
+    chown -R node:node /home/node/.openclaw /home/node/workspace-template
+
+# 拷贝 workspace 模板
+COPY --chown=node:node ./workspace /home/node/workspace-template
 
 USER node
 ENV HOME=/home/node
