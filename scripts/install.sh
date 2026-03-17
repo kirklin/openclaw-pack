@@ -55,55 +55,88 @@ if ! command -v git &> /dev/null; then
     log_success "Git installed successfully."
 fi
 
-# Ensure Docker is started and enabled
-systemctl enable --now docker &> /dev/null || log_warn "Failed to enable Docker service via systemctl."
+# --- 4. Choose Installation Method ---
+echo -e "\n${YELLOW}Please choose your installation method:${NC}"
+echo -e "1) ${GREEN}Pull Pre-built Image${NC} (Faster, recommended for users)"
+echo -e "2) ${GREEN}Local Build from Source${NC} (Better for customization/developers)"
+read -p "Enter your choice (1 or 2, default is 1): " choice
+choice=${choice:-1}
 
-# --- 4. Prepare Deployment Directory & Clone Repo ---
 INSTALL_DIR="/opt/openclaw"
-log_info "Setting up installation directory at ${INSTALL_DIR}..."
+log_info "Setting up installation at ${INSTALL_DIR}..."
 
-if [[ -d "${INSTALL_DIR}" ]]; then
-    log_warn "Directory ${INSTALL_DIR} already exists. Backup and remove it or choose another path."
-    # For now, we continue but warn.
-fi
+if [[ "$choice" == "2" ]]; then
+    # --- Option 2: Local Build ---
+    log_info "Method: Local Build from Source"
+    
+    if ! command -v git &> /dev/null; then
+        log_info "Git not found. Installing Git..."
+        if command -v apt-get &> /dev/null; then
+            apt-get update && apt-get install -y git
+        elif command -v yum &> /dev/null; then
+            yum install -y git
+        else
+            log_error "Failed to install Git. Please install it manually."
+        fi
+        log_success "Git installed successfully."
+    fi
 
-mkdir -p "${INSTALL_DIR}"
-cd "$(dirname "${INSTALL_DIR}")"
+    mkdir -p "${INSTALL_DIR}"
+    cd "$(dirname "${INSTALL_DIR}")"
 
-log_info "Cloning openclaw-pack repository..."
-if [[ -d "openclaw-pack" ]]; then
-    log_warn "Folder openclaw-pack already exists in $(pwd). Attempting to use it..."
-else
-    git clone https://github.com/kirklin/openclaw-pack.git
-fi
+    log_info "Cloning openclaw-pack repository..."
+    if [[ -d "openclaw-pack" ]]; then
+        log_warn "Folder openclaw-pack already exists in $(pwd). Updating..."
+        cd openclaw-pack && git pull
+    else
+        git clone https://github.com/kirklin/openclaw-pack.git
+        cd openclaw-pack
+    fi
 
-cd openclaw-pack
+    # Initialize Configuration
+    if [[ ! -f ".env" ]]; then
+        cp .env.example .env
+        log_success "Created .env from example."
+    fi
 
-# --- 5. Initialize Configuration ---
-if [[ ! -f ".env" ]]; then
-    log_info "Creating .env from example..."
-    cp .env.example .env
-else
-    log_warn ".env already exists, skipping creation."
-fi
-
-# --- 6. Build and Start Locally ---
-log_info "Locally building and starting openclaw-pack services..."
-if docker compose version &> /dev/null; then
+    log_info "Building and starting services..."
     docker compose up -d --build
+
 else
-    log_error "Docker Compose plugin not found. Please ensure Docker is correctly installed."
+    # --- Option 1: Pull Image ---
+    log_info "Method: Pull Pre-built Image"
+    
+    mkdir -p "${INSTALL_DIR}"
+    cd "${INSTALL_DIR}"
+
+    REPO_RAW_URL="https://raw.githubusercontent.com/kirklin/openclaw-pack/main"
+    
+    log_info "Downloading configuration files..."
+    curl -fsSL "${REPO_RAW_URL}/compose.yaml" -o compose.yaml
+    curl -fsSL "${REPO_RAW_URL}/.env.example" -o .env.example
+
+    if [[ ! -f ".env" ]]; then
+        cp .env.example .env
+        log_success "Created .env from example."
+    fi
+
+    log_info "Pulling and starting services..."
+    docker compose up -d
 fi
 
-# --- 7. Final Output ---
+# --- 5. Final Output ---
 echo -e "\n${GREEN}================================================================${NC}"
-log_success "Kirklin's openclaw-pack Local Build & Installation complete!"
+log_success "Kirklin's openclaw-pack Installation complete!"
 echo -e "${GREEN}================================================================${NC}"
 echo -e "\n${YELLOW}Next Steps:${NC}"
 echo -e "1. ${BLUE}Edit your configuration:${NC}"
 echo -e "   cd $(pwd) && nano .env"
-echo -e "2. ${BLUE}Re-build and apply changes (if needed):${NC}"
-echo -e "   docker compose up -d --build"
+echo -e "2. ${BLUE}Apply changes:${NC}"
+if [[ "$choice" == "2" ]]; then
+    echo -e "   docker compose up -d --build"
+else
+    echo -e "   docker compose up -d"
+fi
 echo -e "3. ${BLUE}Check logs:${NC}"
 echo -e "   docker compose logs -f"
 echo -e "\n${GREEN}Enjoy your OpenClaw powered gateway!${NC}\n"

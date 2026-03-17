@@ -16,9 +16,13 @@
 
 ---
 
-## 快速一键安装 (推荐)
+---
 
-如果您使用的是 Linux 服务器，推荐使用以下一键脚本。它会自动为您安装 Docker、Git，拉取本项目源码并启动**本地构建**。
+## 🚀 快速安装 (二选一)
+
+### 方式 A: 一键自动化安装 (推荐)
+
+如果您使用的是 Linux 服务器，这是最简单的方式。脚本会自动安装 Docker，并**询问**您是要直接拉取镜像（快速）还是本地构建（灵活）。
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kirklin/openclaw-pack/main/scripts/install.sh | sudo bash
@@ -26,23 +30,42 @@ curl -fsSL https://raw.githubusercontent.com/kirklin/openclaw-pack/main/scripts/
 
 ---
 
-## 手动快速开始 (本地构建)
+## 🛠️ 手动安装指南
 
-虽然我们也提供预构建镜像，但我们建议用户直接拉取源码进行本地构建，这样可以更灵活地适配您的插件环境。
+根据您的需求选择从镜像运行或从源码构建。
 
-### 1. 克隆项目与准备配置
+### 方式 B: 直接运行预构建镜像 (极简)
 
-```bash
-# 克隆仓库
-git clone https://github.com/kirklin/openclaw-pack.git
-cd openclaw-pack
-```
-
-### 2. 配置环境变量
+适用于只想直接使用，不需要修改源码或添加复杂插件的用户。
 
 ```bash
+# 1. 下载配置文件
+wget https://raw.githubusercontent.com/kirklin/openclaw-pack/main/compose.yaml
+wget https://raw.githubusercontent.com/kirklin/openclaw-pack/main/.env.example
+
+# 2. 准备环境变量
 cp .env.example .env
 nano .env
+
+# 3. 启动
+docker compose up -d
+```
+
+### 方式 C: 从源码本地构建 (开发者推荐)
+
+如果您需要根据自己的需求修改 `Dockerfile` 或深度定制插件，建议使用此方式。
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/kirklin/openclaw-pack.git
+cd openclaw-pack
+
+# 2. 准备配置
+cp .env.example .env
+nano .env
+
+# 3. 本地构建并运行
+docker compose up -d --build
 ```
 
 **最核心 AI 后端配置示例**（至少需要指定大模型，国内 IM 通道为按需填写）：
@@ -59,13 +82,7 @@ nano .env
 | `BOT_FEISHU_APP_ID` | 飞书应用 APP ID |
 | `BOT_FEISHU_SECRET` | 飞书应用凭证 |
 
-### 3. 本地构建并运行
-
-> **⚠️ 注意：** 强烈建议使用 `docker compose` 进行本地构建启动。这能确保您的镜像与当前代码同步，并自动加载 `.env` 配置。
-
-```bash
-docker compose up -d --build
-```
+*(注：更多配置细节请参阅下文的环境变量说明)*
 
 ### 4. 查阅专业日志
 
