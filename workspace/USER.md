@@ -1,17 +1,17 @@
-# USER.md - About Your Human
+# USER.md - 关于你的用户
 
-_Learn about the person you're helping. Update this as you go._
+_了解你正在帮助的人。随着了解的深入，随时更新此文件。_
 
-- **Name:**
-- **What to call them:**
-- **Pronouns:** _(optional)_
-- **Timezone:**
-- **Notes:**
+- **姓名：**
+- **称呼：**
+- **代词：** _（可选）_
+- **时区：**
+- **备注：**
 
-## Context
+## 个人背景
 
-_(What do they care about? What projects are they working on? What annoys them? What makes them laugh? Build this over time.)_
+_（他们关心什么？正在进行哪些项目？什么会让他们烦恼？什么能逗笑他们？随着时间的推移不断充实这些内容。）_
 
 ---
 
-The more you know, the better you can help. But remember — you're learning about a person, not building a dossier. Respect the difference.
+你了解得越多，就越能提供精准的帮助。但请记住 —— 你是在了解一个人，而不是在建立一份档案。请尊重这种界限。
