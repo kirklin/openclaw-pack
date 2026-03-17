@@ -16,28 +16,26 @@
 
 ---
 
-## 0. 前置依赖 (安装 Docker)
+## 快速一键安装 (推荐)
 
-本项目依赖 Docker 容器环境。如果您是一台全新的服务器，或者还不知道什么是 Docker，请先安装。
-对于 Linux 独立服务器，您可以直接复制以下官方一键安装脚本执行：
+如果您使用的是 Linux 服务器，推荐使用以下一键脚本。它会自动为您安装 Docker、Git，拉取本项目源码并启动**本地构建**。
 
 ```bash
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
+curl -fsSL https://raw.githubusercontent.com/kirklin/openclaw-pack/main/scripts/install.sh | sudo bash
 ```
-*(Windows/Mac 用户请直接前去 [Docker 官网](https://www.docker.com/products/docker-desktop/) 下载安装 Docker Desktop 图形化版本)*
 
 ---
 
-## 快速开始
+## 手动快速开始 (本地构建)
 
-### 1. 准备配置
+虽然我们也提供预构建镜像，但我们建议用户直接拉取源码进行本地构建，这样可以更灵活地适配您的插件环境。
 
-下载配置文件与示例变量：
+### 1. 克隆项目与准备配置
 
 ```bash
-wget https://raw.githubusercontent.com/kirklin/openclaw-pack/main/compose.yaml
-wget https://raw.githubusercontent.com/kirklin/openclaw-pack/main/.env.example
+# 克隆仓库
+git clone https://github.com/kirklin/openclaw-pack.git
+cd openclaw-pack
 ```
 
 ### 2. 配置环境变量
@@ -61,12 +59,12 @@ nano .env
 | `BOT_FEISHU_APP_ID` | 飞书应用 APP ID |
 | `BOT_FEISHU_SECRET` | 飞书应用凭证 |
 
-### 3. 一键起飞
+### 3. 本地构建并运行
 
-> **⚠️ 注意：** 强烈建议使用 `docker compose` 启动本项目，而不是直接使用 `docker run`。直接使用 `docker run` 无法自动加载 `.env` 文件中的配置（如 `GEMINI_API_KEY` 等），除非你手动用 `-e` 注入所有变量。
+> **⚠️ 注意：** 强烈建议使用 `docker compose` 进行本地构建启动。这能确保您的镜像与当前代码同步，并自动加载 `.env` 配置。
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
 ### 4. 查阅专业日志
