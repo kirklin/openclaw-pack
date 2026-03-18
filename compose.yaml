@@ -1,5 +1,4 @@
-version: "3.8"
-
+# compose.yaml
 x-logging: &default-logging
   driver: json-file
   options:
@@ -11,6 +10,7 @@ services:
   # OpenViking 长效记忆服务
   # ==============================================================================
   openviking:
+    image: ${OPENVIKING_IMAGE:-kirklin/openviking:latest}
     build: ./docker/openviking
     container_name: openviking
     restart: unless-stopped

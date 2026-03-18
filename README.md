@@ -253,16 +253,16 @@ BOT_FEISHU_REPLY_TO_MODE=all          # 引用回复模式: all, first, off
 
 *(可选) 查看待配对列表*：
 ```bash
-docker compose exec openclaw-pack openclaw pairing list feishu
+docker compose exec -it openclaw-pack openclaw pairing list feishu
 ```
 
 *用配对码通过该用户的请求*：
 ```bash
-docker compose exec openclaw-pack openclaw pairing approve feishu <配对码>
+docker compose exec -it openclaw-pack openclaw pairing approve feishu <配对码>
 ```
 例如：
 ```bash
-docker compose exec openclaw-pack openclaw pairing approve feishu ABCDEFGH
+docker compose exec -it openclaw-pack openclaw pairing approve feishu ABCDEFGH
 ```
 
 > **注意**：通过后，该用户再在飞书里发消息即可正常收到回复。配对码约 1 小时有效，超时请让用户再给机器人发一条消息以获取新码，然后再执行 pairing approve。
