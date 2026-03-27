@@ -21,8 +21,8 @@ RUN echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/80-retries && \
     sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
     apt-get update && \
     apt-get install -y --no-install-recommends --fix-missing \
-        ca-certificates curl wget gnupg jq git python3 unzip \
-        libcap2-bin gosu chromium fonts-noto-cjk fonts-noto-color-emoji && \
+    ca-certificates curl wget gnupg jq git python3 unzip build-essential procps file \
+    libcap2-bin gosu chromium fonts-noto-cjk fonts-noto-color-emoji && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -33,10 +33,8 @@ RUN chmod 4755 /usr/bin/chromium || true
 # 2. 核心框架与全局依赖 (Global Dependencies)
 # ==========================================
 # 使用 npm 国内镜像源加速全局包安装，并锁定核心组件版本
-RUN npm config set registry https://registry.npmmirror.com && \
-    npm install -g npm@latest && \
-    npm install -g pnpm@latest && \
-    npm install -g openclaw@latest @sunnoy/wecom @openclaw/feishu playwright && \
+RUN npm install -g pnpm@latest && \
+    npm install -g openclaw@2026.3.24 playwright && \
     npx playwright install chromium --with-deps && \
     rm -rf /root/.npm /root/.cache
 
@@ -48,8 +46,8 @@ RUN setcap 'cap_net_bind_service=+ep' /usr/local/bin/node
 # ==========================================
 # 创建目录并赋予 node 用户权限，避免后续权限错乱
 RUN mkdir -p /home/node/.openclaw/workspace \
-             /home/node/.openclaw/extensions \
-             /home/node/workspace-template && \
+    /home/node/.openclaw/extensions \
+    /home/node/workspace-template && \
     chown -R node:node /home/node/.openclaw /home/node/workspace-template
 
 # 拷贝 workspace 模板
@@ -57,37 +55,17 @@ COPY --chown=node:node ./workspace /home/node/workspace-template
 
 USER node
 ENV HOME=/home/node
-WORKDIR /home/node/.openclaw/extensions
+WORKDIR /home/node
 
 # ==========================================
-# 4. 插件独立分层安装 (Isolated Plugin Layers)
+# 4. 环境配置与工具安装 (Environment & Tools)
 # ==========================================
-# 优势：分层缓存。如果只修改单个插件，Docker 会复用其他层，极大提升二次构建速度。
-# 注意：每个 RUN 内部自带清理命令，防止镜像体积膨胀。
-
-# 插件 A: 钉钉接入 (Dingtalk)
-RUN git clone --depth 1 https://github.com/soimy/openclaw-channel-dingtalk.git dingtalk && \
-    cd dingtalk && \
-    npm install --omit=dev --legacy-peer-deps && \
-    rm -rf .git
-
-# 插件 B: QQ 机器人 (QQBot)
-RUN git clone --depth 1 https://github.com/justlovemaki/qqbot.git qqbot && \
-    cd qqbot && \
-    npm install --omit=dev || true && \
-    rm -rf .git
-
-# 插件 C: OpenViking 长效记忆 (memory-openviking)
-RUN git clone --depth 1 --filter=blob:none --sparse \
-        https://github.com/volcengine/OpenViking.git openviking-src && \
-    cd openviking-src && \
-    git sparse-checkout set examples/openclaw-memory-plugin && \
-    cd .. && \
-    mv openviking-src/examples/openclaw-memory-plugin memory-openviking && \
-    rm -rf openviking-src && \
-    cd memory-openviking && \
-    npm install --legacy-peer-deps && \
-    rm -rf .git
+# 安装 linuxbrew（Homebrew 的 Linux 版本）
+RUN mkdir -p /home/node/.linuxbrew/Homebrew && \
+    git clone --depth 1 https://github.com/Homebrew/brew /home/node/.linuxbrew/Homebrew && \
+    mkdir -p /home/node/.linuxbrew/bin && \
+    ln -s /home/node/.linuxbrew/Homebrew/bin/brew /home/node/.linuxbrew/bin/brew && \
+    chmod -R g+rwX /home/node/.linuxbrew
 
 # 全局清理 Node 用户的缓存
 RUN rm -rf /home/node/.npm /home/node/.cache
@@ -101,10 +79,13 @@ USER root
 COPY ./scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# 核心环境变量
+# 核心环境变量与 linuxbrew 配置
 ENV HOME=/home/node \
     TERM=xterm-256color \
-    NODE_PATH=/usr/local/lib/node_modules
+    NODE_PATH=/usr/local/lib/node_modules \
+    PATH="/home/node/.linuxbrew/bin:/home/node/.linuxbrew/sbin:${PATH}" \
+    HOMEBREW_NO_AUTO_UPDATE=1 \
+    HOMEBREW_NO_INSTALL_CLEANUP=1
 
 # 暴露网关端口
 EXPOSE 18789 18790

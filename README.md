@@ -8,7 +8,7 @@
 
 ### 核心特性
 
-- **聚合集成**：免配置，直接内置飞书、钉钉、QQ 机器人、企业微信四大国内主流 IM 平台通道。
+- **聚合集成**：开箱即用，原生内置飞书通道。
 - **长效记忆**：内置 [OpenViking](https://github.com/volcengine/OpenViking) 记忆服务，自动记录对话关键信息，回复前主动回忆，让机器人真正"认识"用户。
 - **专业规范体系**：环境变量经过高度抽象归类。无论是大模型的 `LLM_BASE_URL` 或者是企微的多设备并发，一目了然。
 - **专业日志审计**：初始化环节拥有清晰的日志输出（`INFO`/`WARN`/`ERROR`/`SUCCESS`），一眼排错。
@@ -95,7 +95,6 @@ docker compose logs -f openclaw-pack
 > <br/>[INFO] 同步大模型配置...
 > <br/>[SUCCESS] 默认提供商同步完毕. 主模型={ default/gpt-5-nano }
 > <br/>[SUCCESS] 已配置: 飞书
-> <br/>[SUCCESS] 已配置: 企业微信多账号配置 (JSON)
 > <br/>[SUCCESS] 网关代理 (Gateway) 配置已刷新.
 > <br/>[SUCCESS] 工具策略 (Tools) 已配置: profile=coding, deny=["canvas","nodes"]
 
@@ -181,18 +180,6 @@ OV_API_KEY=<your-ark-api-key>
 
 ---
 
-## 高级用法：企业微信多账号 (Multi-Bot) 集成
-
-支持利用纯 `jq` 在 JSON 层进行深度的对象合并。只需在 `.env` 中添加一条紧凑的 JSON 即可：
-
-```bash
-BOT_WECOM_MULTI_JSON={"bot_support":{"token":"T1","encodingAesKey":"K1","agent":{"corpId":"wxXXXXX","corpSecret":"S1","agentId":1001}}}
-```
-
-启动后容器将自动分发路由至不同应用通道，消息彻底隔离！
-
----
-
 ## 🤖 IM 平台接入指南
 
 以下是各大 IM 平台对接机器人所需的简单环境变量配置步骤。容器会在下次启动时自动生效。
@@ -271,48 +258,7 @@ docker compose exec -it openclaw-pack openclaw pairing approve feishu ABCDEFGH
 
 </details>
 
-<details>
-<summary><b>钉钉 (DingTalk) 机器人配置</b></summary>
 
-### 1. 简要配置环境变量 (`.env`)
-```bash
-BOT_DING_CLIENT_ID=ding_xxxxxxxxxx
-BOT_DING_SECRET=xxxxxxxxxxxxxxxxxxxx
-BOT_DING_ROBOT_CODE=ding_xxxxxxxxxx  # 通常与 Client ID 相同
-BOT_DING_CORP_ID=ding_xxxxxxxxxxxx   # 你的钉钉企业 ID
-BOT_DING_AGENT_ID=123456789          # 应用的 Agent ID
-```
-
-> 💡 **详细文档**：关于如何在钉钉开放平台创建机器人、切换 Stream 接收模式，以及高级卡片消息发送等更多细节，请参考插件原始仓库：[clawdbot-channel-dingtalk](https://github.com/soimy/clawdbot-channel-dingtalk)。
-
-</details>
-
-<details>
-<summary><b>QQ / Napcat 接入指南</b></summary>
-
-如果你使用的是 QQ 官方开放平台，填写下面两项：
-```bash
-QQBOT_APP_ID=100000xxx
-QQBOT_CLIENT_SECRET=xxxxxxxxxxxxxx
-```
-
-> 💡 **详细文档**：QQ 官方接口的最新策略要求与进阶使用方法，请参考插件原始仓库：[qqbot](https://github.com/sliverp/qqbot)。
-
-</details>
-
-<details>
-<summary><b>企业微信 (WeCom) 单账号配置</b></summary>
-
-### 1. 简要配置环境变量 (`.env`)
-```bash
-WECOM_TOKEN=你的Token
-WECOM_ENCODING_AES_KEY=你的EncodingAESKeyxxxxxxxxxx
-```
-*填写完毕后，会自动映射为内部的 `default` 机器人账号。*
-
-> 💡 **详细图文教程**：企业微信的 Token 配置较为复杂，牵扯到 API 验证和地址填写。关于企业微信后台的确切配置步骤、接收回调 URL 服务器验证，以及高级群组拦截和并发配置，强烈建议参考原始插件文档：[openclaw-plugin-wecom](https://github.com/sunnoy/openclaw-plugin-wecom)。
-
-</details>
 
 ---
 

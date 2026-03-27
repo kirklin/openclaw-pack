@@ -233,18 +233,6 @@ if [[ -n "$OPENCLAW_PLUGINS_ENABLED" ]]; then
     jq --argjson ep "$enable_plugins" '.plugins.enabled = $ep' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
 fi
 
-# ---- 3.1 Telegram ----
-if [[ -n "$BOT_TELEGRAM_TOKEN" ]]; then
-    jq --arg token "$BOT_TELEGRAM_TOKEN" \
-       '.channels.telegram = {
-          "botToken": $token, "dmPolicy": "pairing", "groupPolicy": "allowlist", "streamMode": "partial"
-        }' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
-    
-    jq '.plugins.entries.telegram = {"enabled": true}' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
-    PLUGINS_ENABLE_MAP["telegram"]=1
-    log_success "已配置: Telegram"
-fi
-
 # ---- 3.2 飞书 (Feishu) ----
 if [[ -n "$BOT_FEISHU_APP_ID" && -n "$BOT_FEISHU_SECRET" ]]; then
     jq --arg id "$BOT_FEISHU_APP_ID" --arg sec "$BOT_FEISHU_SECRET" \
@@ -259,7 +247,7 @@ if [[ -n "$BOT_FEISHU_APP_ID" && -n "$BOT_FEISHU_SECRET" ]]; then
        --arg resolve "${BOT_FEISHU_RESOLVE_NAMES:-true}" \
        --arg reply "${BOT_FEISHU_REPLY_TO_MODE:-all}" \
        '
-       .channels.feishu = {
+       .channels.feishu = (.channels.feishu // {}) * {
          "enabled": true,
          "connectionMode": $mode,
          "streaming": ($streaming | ascii_downcase == "true"),
@@ -282,111 +270,6 @@ if [[ -n "$BOT_FEISHU_APP_ID" && -n "$BOT_FEISHU_SECRET" ]]; then
     ' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
     PLUGINS_ENABLE_MAP["feishu"]=1
     log_success "已配置: 飞书 (Mode: ${BOT_FEISHU_CONNECTION_MODE:-websocket})"
-fi
-
-# ---- 3.3 钉钉 (Dingtalk) ----
-if [[ -n "$BOT_DING_CLIENT_ID" && -n "$BOT_DING_SECRET" ]]; then
-    jq --arg id "$BOT_DING_CLIENT_ID" --arg sec "$BOT_DING_SECRET" \
-       --arg code "${BOT_DING_ROBOT_CODE:-$BOT_DING_CLIENT_ID}" \
-       --arg corp "${BOT_DING_CORP_ID:-}" \
-       --arg agent "${BOT_DING_AGENT_ID:-}" \
-       '
-       .channels.dingtalk = {
-         "enabled": true, "clientId": $id, "clientSecret": $sec, "robotCode": $code,
-         "dmPolicy": "open", "groupPolicy": "open", "messageType": "markdown", "allowFrom": ["*"],
-         "corpId": (if $corp!="" then $corp else null end),
-         "agentId": (if $agent!="" then $agent else null end)
-       } | del(.channels.dingtalk.corpId | nulls) | del(.channels.dingtalk.agentId | nulls)' \
-       "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
-
-    jq --arg now "$UTC_NOW" '
-       .plugins.entries.dingtalk = {"enabled": true} |
-       (if .plugins.installs.dingtalk == null then
-          .plugins.installs.dingtalk = {"source":"npm", "spec":"https://github.com/soimy/clawdbot-channel-dingtalk.git", "installPath":"/home/node/.openclaw/extensions/dingtalk", "installedAt": $now}
-        else . end)
-    ' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
-    PLUGINS_ENABLE_MAP["dingtalk"]=1
-    log_success "已配置: 钉钉"
-fi
-
-# ---- 3.4 QQ (Napcat & qqbot) ----
-# 如果配置了 Napcat
-if [[ -n "$BOT_NAPCAT_WS_PORT" ]]; then
-    jq --arg port "$BOT_NAPCAT_WS_PORT" \
-       --arg url "${BOT_NAPCAT_HTTP_URL:-}" \
-       --arg acc_t "${BOT_NAPCAT_ACCESS_TOKEN:-}" \
-       --arg admin_str "${BOT_NAPCAT_ADMINS:-}" \
-       '
-       .channels.napcat = {
-          "enabled": true, "reverseWsPort": ($port|tonumber), "requireMention": true, "rateLimitMs": 1000,
-          "httpUrl": (if $url!="" then $url else null end),
-          "accessToken": (if $acc_t!="" then $acc_t else null end),
-          "admins": (if $admin_str!="" then ($admin_str | split(",") | map(tonumber? | select(. != null))) else null end)
-       } | del(.channels.napcat.httpUrl | nulls) | del(.channels.napcat.accessToken | nulls) | del(.channels.napcat.admins | nulls)' \
-       "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
-
-    jq --arg now "$UTC_NOW" '
-       .plugins.entries.napcat = {"enabled": true} |
-       (if .plugins.installs.napcat == null then
-          .plugins.installs.napcat = {"source":"path", "sourcePath":"/home/node/.openclaw/extensions/napcat", "installPath":"/home/node/.openclaw/extensions/napcat", "installedAt": $now}
-        else . end)
-    ' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
-    PLUGINS_ENABLE_MAP["napcat"]=1
-    log_success "已配置: QQ (Napcat)"
-# 备用旧版 qqbot
-elif [[ -n "$BOT_QQ_APP_ID" && -n "$BOT_QQ_SECRET" ]]; then
-    jq --arg id "$BOT_QQ_APP_ID" --arg sec "$BOT_QQ_SECRET" \
-       '.channels.qqbot = { "enabled": true, "appId": $id, "clientSecret": $sec }' \
-       "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
-    
-       jq --arg now "$UTC_NOW" '
-       .plugins.entries.qqbot = {"enabled": true} |
-       (if .plugins.installs.qqbot == null then
-          .plugins.installs.qqbot = {"source":"path", "sourcePath":"/home/node/.openclaw/qqbot", "installPath":"/home/node/.openclaw/extensions/qqbot", "installedAt": $now}
-        else . end)
-    ' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
-    PLUGINS_ENABLE_MAP["qqbot"]=1
-    log_success "已配置: QQ (旧版 qqbot)"
-fi
-
-# ---- 3.5 企业微信 (WeCom) ----
-wecom_configured=0
-# 3.5.1 旧版本多账号/复杂配置支持 (基于 JSON 字符串合并)
-if [[ -n "$BOT_WECOM_MULTI_JSON" ]]; then
-    log_info "发现 BOT_WECOM_MULTI_JSON，尝试合并企业微信多账号..."
-    if jq -e . >/dev/null 2>&1 <<<"$BOT_WECOM_MULTI_JSON"; then
-        jq --argjson wecom_obj "$BOT_WECOM_MULTI_JSON" \
-           '.channels.wecom = (.channels.wecom // {}) * $wecom_obj * {
-              "enabled": true, "commands": {"enabled":true, "allowlist":["/new","/status","/help","/compact"]}
-            }' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
-        wecom_configured=1
-        log_success "已导入: 企业微信多账号配置 (JSON)"
-    else
-        log_error "解析 BOT_WECOM_MULTI_JSON 失败，不是合法的 JSON 字符串"
-    fi
-fi
-
-# 3.5.2 标准单账号覆盖
-if [[ -n "$BOT_WECOM_TOKEN" && -n "$BOT_WECOM_AES_KEY" ]]; then
-    jq --arg token "$BOT_WECOM_TOKEN" --arg aes "$BOT_WECOM_AES_KEY" \
-       '.channels.wecom = (.channels.wecom // {}) * {
-          "enabled": true,
-          "default": { "token": $token, "encodingAesKey": $aes },
-          "commands": { "enabled": true, "allowlist": ["/new","/status","/help","/compact"] }
-       } | del(.channels.wecom.token) | del(.channels.wecom.encodingAesKey)' \
-       "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
-    wecom_configured=1
-    log_success "已配置: 企业微信单账号"
-fi
-
-if [[ $wecom_configured -eq 1 ]]; then
-    jq --arg now "$UTC_NOW" '
-       .plugins.entries.wecom = {"enabled": true} |
-       (if .plugins.installs.wecom == null then
-          .plugins.installs.wecom = {"source":"npm", "spec":"@sunnoy/wecom", "installPath":"/home/node/.openclaw/extensions/wecom", "installedAt": $now}
-        else . end)
-    ' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
-    PLUGINS_ENABLE_MAP["wecom"]=1
 fi
 
 # ---- 3.6 OpenViking 长效记忆插件 ----

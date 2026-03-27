@@ -114,21 +114,6 @@
     "nativeSkills": "auto"
   },
   "channels": {
-    "dingtalk": {
-      "enabled": true,
-      "messageType": "markdown",
-      "clientId": "ding_client_id_example",
-      "clientSecret": "ding_client_secret_example",
-      "robotCode": "ding_client_id_example",
-      "corpId": "ding_corp_id_example",
-      "agentId": "123456",
-      "allowFrom": [
-        "*"
-      ],
-      "dmPolicy": "open",
-      "groupPolicy": "open",
-      "debug": false
-    },
     "feishu": {
       "enabled": true,
       "connectionMode": "websocket",
@@ -146,37 +131,6 @@
           "appSecret": "example_secret"
         }
       }
-    },
-    "wecom": {
-      "enabled": true,
-      "bot_example": {
-        "token": "WeComTokenExample",
-        "encodingAesKey": "WeComAESKeyExampleXXXXXXXXXXXXXXXXXX",
-        "adminUsers": [
-          "AdminUser"
-        ],
-        "agent": {
-          "corpId": "wwExampleCorpId",
-          "corpSecret": "ExampleCorpSecretXYZ",
-          "agentId": 1000000,
-          "token": "AgentTokenExample",
-          "encodingAesKey": "AgentAESKeyExample"
-        },
-        "webhooks": {
-          "alert-group": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxx-xxxx"
-        }
-      }
-    },
-    "qqbot": {
-      "enabled": true,
-      "appId": "100000000",
-      "clientSecret": "qqbot_secret_example"
-    },
-    "telegram": {
-      "botToken": "your-telegram-bot-token",
-      "streamMode": "partial",
-      "dmPolicy": "pairing",
-      "groupPolicy": "allowlist"
     }
   },
   "tools": {
@@ -191,26 +145,10 @@
   },
   "plugins": {
     "allow": [
-      "feishu",
-      "dingtalk",
-      "wecom",
-      "qqbot",
-      "telegram"
+      "feishu"
     ],
     "entries": {
       "feishu": {
-        "enabled": true
-      },
-      "dingtalk": {
-        "enabled": true
-      },
-      "wecom": {
-        "enabled": true
-      },
-      "qqbot": {
-        "enabled": true
-      },
-      "telegram": {
         "enabled": true
       }
     },
@@ -219,24 +157,6 @@
         "source": "npm",
         "spec": "@openclaw/feishu",
         "installPath": "/home/node/.openclaw/extensions/feishu",
-        "installedAt": "2026-03-04T12:00:00.000Z"
-      },
-      "wecom": {
-        "source": "npm",
-        "spec": "@sunnoy/wecom",
-        "installPath": "/home/node/.openclaw/extensions/wecom",
-        "installedAt": "2026-03-04T12:00:00.000Z"
-      },
-      "dingtalk": {
-        "source": "npm",
-        "spec": "https://github.com/soimy/clawdbot-channel-dingtalk.git",
-        "installPath": "/home/node/.openclaw/extensions/dingtalk",
-        "installedAt": "2026-03-04T12:00:00.000Z"
-      },
-      "qqbot": {
-        "source": "path",
-        "sourcePath": "/home/node/.openclaw/qqbot",
-        "installPath": "/home/node/.openclaw/extensions/qqbot",
         "installedAt": "2026-03-04T12:00:00.000Z"
       }
     }
