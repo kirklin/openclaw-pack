@@ -1,6 +1,6 @@
 {
   "meta": {
-    "lastTouchedVersion": "2026.3.2",
+    "lastTouchedVersion": "2026.5.7",
     "lastTouchedAt": "2026-03-06T06:14:11.371Z"
   },
   "update": {
@@ -102,12 +102,7 @@
     }
   },
   "messages": {
-    "ackReactionScope": "group-mentions",
-    "tts": {
-      "edge": {
-        "voice": "zh-CN-XiaoxiaoNeural"
-      }
-    }
+    "ackReactionScope": "group-mentions"
   },
   "commands": {
     "native": "auto",
@@ -116,17 +111,16 @@
   "channels": {
     "feishu": {
       "enabled": true,
+      "domain": "feishu",
       "connectionMode": "websocket",
       "streaming": true,
       "dmPolicy": "pairing",
       "groupPolicy": "open",
       "typingIndicator": true,
       "resolveSenderNames": true,
-      "reactionNotifications": "own",
-      "replyToMode": "all",
       "accounts": {
         "default": {
-          "botName": "OpenClaw Bot",
+          "name": "OpenClaw Bot",
           "appId": "cli_example_id",
           "appSecret": "example_secret"
         }

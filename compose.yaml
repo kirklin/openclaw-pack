@@ -6,42 +6,6 @@ x-logging: &default-logging
     max-file: "3"
 
 services:
-  # ==============================================================================
-  # OpenViking 长效记忆服务
-  # ==============================================================================
-  openviking:
-    image: ${OPENVIKING_IMAGE:-kirklin/openviking:latest}
-    build: ./docker/openviking
-    container_name: openviking
-    restart: unless-stopped
-    logging: *default-logging
-    environment:
-      TZ: Asia/Shanghai
-      # === OpenViking 统一 API Key / Base（embed 和 vlm 用同一供应商时只填这两项）===
-      OV_API_KEY: ${OV_API_KEY:-${LLM_API_KEY}}
-      OV_API_BASE: ${OV_API_BASE:-${LLM_BASE_URL}}
-      # === Embedding 配置 ===
-      OPENVIKING_EMBED_PROVIDER: ${OPENVIKING_EMBED_PROVIDER:-openai}
-      OPENVIKING_EMBED_API_KEY:  ${OPENVIKING_EMBED_API_KEY}
-      OPENVIKING_EMBED_API_BASE: ${OPENVIKING_EMBED_API_BASE}
-      OPENVIKING_EMBED_MODEL:    ${OPENVIKING_EMBED_MODEL:-text-embedding-3-small}
-      OPENVIKING_EMBED_DIM:      ${OPENVIKING_EMBED_DIM:-1536}
-      # === VLM 配置 ===
-      OPENVIKING_VLM_PROVIDER:   ${OPENVIKING_VLM_PROVIDER:-openai}
-      OPENVIKING_VLM_API_KEY:    ${OPENVIKING_VLM_API_KEY}
-      OPENVIKING_VLM_API_BASE:   ${OPENVIKING_VLM_API_BASE}
-      OPENVIKING_VLM_MODEL:      ${OPENVIKING_VLM_MODEL:-gpt-4o-mini}
-    volumes:
-      - openviking-data:/root/.openviking
-    ports:
-      - "${OPENVIKING_PORT:-1933}:1933"
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:1933/health')"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
-
   openclaw-pack:
     build: .
     image: ${APP_IMAGE:-kirklin/openclaw-pack:latest}
@@ -49,18 +13,19 @@ services:
     restart: unless-stopped
     logging: *default-logging
     init: true
-    depends_on:
-      openviking:
-        condition: service_healthy
-        required: false
     cap_add:
       - CHOWN
       - SETUID
       - SETGID
       - DAC_OVERRIDE
+    cap_drop:
+      - NET_RAW
+      - NET_ADMIN
+    security_opt:
+      - no-new-privileges:true
     user: ${APP_RUN_USER:-0:0}
     healthcheck:
-      test: ["CMD", "openclaw", "health"]
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:18789/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -79,6 +44,11 @@ services:
       TERM: xterm-256color
       HOME: /home/node
       APP_WORKSPACE: ${APP_WORKSPACE:-/home/node/.openclaw/workspace}
+      # 2026.5+ 新增：容器内允许 root 运行 CLI
+      OPENCLAW_ALLOW_ROOT: "1"
+      # 2026.5+ 新增：固定容器内配置和工作区目录，防止宿主机路径泄漏
+      OPENCLAW_CONFIG_DIR: /home/node/.openclaw
+      OPENCLAW_WORKSPACE_DIR: /home/node/.openclaw/workspace
 
       # Plugin Auth & Flags
       OPENCLAW_PLUGINS_ENABLED: ${OPENCLAW_PLUGINS_ENABLED:-true}
@@ -126,13 +96,7 @@ services:
       BOT_FEISHU_APP_ID: ${BOT_FEISHU_APP_ID}
       BOT_FEISHU_SECRET: ${BOT_FEISHU_SECRET}
 
-      # OpenViking 长效记忆
-      OPENVIKING_MEMORY_ENABLED: ${OPENVIKING_MEMORY_ENABLED:-false}
-      OPENVIKING_BASE_URL: ${OPENVIKING_BASE_URL:-http://openviking:1933}
-      OPENVIKING_API_KEY: ${OPENVIKING_API_KEY:-openviking-internal-key}
-      OPENVIKING_AGENT_ID: ${OPENVIKING_AGENT_ID:-}
-      OPENVIKING_AUTO_RECALL: ${OPENVIKING_AUTO_RECALL:-true}
-      OPENVIKING_AUTO_CAPTURE: ${OPENVIKING_AUTO_CAPTURE:-true}
+
 
       # Tools 工具策略
       OPENCLAW_TOOLS_PROFILE: ${OPENCLAW_TOOLS_PROFILE:-coding}
@@ -140,5 +104,3 @@ services:
       OPENCLAW_TOOLS_DENY: ${OPENCLAW_TOOLS_DENY:-canvas,nodes}
       OPENCLAW_TOOLS_LOOP_DETECTION: ${OPENCLAW_TOOLS_LOOP_DETECTION:-true}
 
-volumes:
-  openviking-data:

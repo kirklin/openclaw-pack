@@ -46,6 +46,14 @@ else
     log_info "工作区已存在初始化标记，跳过自动覆盖 (如欲强制同步请设置环境变量 OVERWRITE_WORKSPACE=force)"
 fi
 
+# --- 同步预装插件（Docker 构建时以 root 身份安装到 /root/.openclaw） ---
+if [ -d "/root/.openclaw/npm" ] && [ ! -d "$APP_DATA_DIR/npm" ]; then
+    log_info "同步预装插件到用户目录..."
+    cp -r /root/.openclaw/npm "$APP_DATA_DIR/npm"
+    chown -R node:node "$APP_DATA_DIR/npm" || true
+    log_success "预装插件同步完成"
+fi
+
 # --- Permissions Check ---
 if [ "$(id -u)" -eq 0 ]; then
     CURRENT_OWNER="$(stat -c '%u:%g' "$APP_DATA_DIR" 2>/dev/null || echo unknown:unknown)"
@@ -74,7 +82,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
     # 构造基础骨架，并通过 jq 将其格式化输出
     jq -n '
 {
-  "meta": { "lastTouchedVersion": "2026.3.11" },
+  "meta": { "lastTouchedVersion": "2026.5.7" },
   "update": { "checkOnStart": false },
   "browser": {
     "headless": true,
@@ -94,7 +102,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
       "imageModel": { "primary": "default/gpt-5-nano" }
     }
   },
-  "messages": { "ackReactionScope": "group-mentions", "tts": { "edge": { "voice": "zh-CN-XiaoxiaoNeural" } } },
+  "messages": { "ackReactionScope": "group-mentions" },
   "commands": { "native": "auto", "nativeSkills": "auto" },
   "tools": { "profile": "full", "allow": ["*"], "deny": [], "sessions": { "visibility": "all" } },
   "channels": {},
@@ -243,22 +251,19 @@ if [[ -n "$BOT_FEISHU_APP_ID" && -n "$BOT_FEISHU_SECRET" ]]; then
        --arg dm "${BOT_FEISHU_DM_POLICY:-pairing}" \
        --arg group "${BOT_FEISHU_GROUP_POLICY:-open}" \
        --arg typing "${BOT_FEISHU_TYPING_INDICATOR:-true}" \
-       --arg reaction "${BOT_FEISHU_REACTION_NOTIFICATIONS:-own}" \
        --arg resolve "${BOT_FEISHU_RESOLVE_NAMES:-true}" \
-       --arg reply "${BOT_FEISHU_REPLY_TO_MODE:-all}" \
        '
        .channels.feishu = (.channels.feishu // {}) * {
          "enabled": true,
+         "domain": $domain,
          "connectionMode": $mode,
          "streaming": ($streaming | ascii_downcase == "true"),
          "dmPolicy": $dm,
          "groupPolicy": $group,
          "typingIndicator": ($typing | ascii_downcase == "true"),
          "resolveSenderNames": ($resolve | ascii_downcase == "true"),
-         "reactionNotifications": $reaction,
-         "replyToMode": $reply,
          "accounts": {
-           "default": { "appId": $id, "appSecret": $sec, "botName": $name, "domain": $domain }
+           "default": { "appId": $id, "appSecret": $sec, "name": $name }
          }
        }' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
     
@@ -270,51 +275,6 @@ if [[ -n "$BOT_FEISHU_APP_ID" && -n "$BOT_FEISHU_SECRET" ]]; then
     ' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
     PLUGINS_ENABLE_MAP["feishu"]=1
     log_success "已配置: 飞书 (Mode: ${BOT_FEISHU_CONNECTION_MODE:-websocket})"
-fi
-
-# ---- 3.6 OpenViking 长效记忆插件 ----
-if [[ "${OPENVIKING_MEMORY_ENABLED,,}" == "true" || "$OPENVIKING_MEMORY_ENABLED" == "1" ]]; then
-    OV_BASE_URL="${OPENVIKING_BASE_URL:-http://openviking:1933}"
-    OV_API_KEY="${OPENVIKING_API_KEY:-}"
-    OV_AGENT_ID="${OPENVIKING_AGENT_ID:-}"
-    OV_AUTO_RECALL="${OPENVIKING_AUTO_RECALL:-true}"
-    OV_AUTO_CAPTURE="${OPENVIKING_AUTO_CAPTURE:-true}"
-
-    # 写入插件配置并设置记忆插槽
-    jq --arg baseUrl  "$OV_BASE_URL" \
-       --arg apiKey   "$OV_API_KEY" \
-       --arg agentId  "$OV_AGENT_ID" \
-       --argjson recall  "$OV_AUTO_RECALL" \
-       --argjson capture "$OV_AUTO_CAPTURE" \
-    '
-    .plugins.slots.memory = "memory-openviking" |
-    .plugins.entries["memory-openviking"] = {
-      "enabled": true,
-      "config": {
-        "mode": "remote",
-        "baseUrl": $baseUrl,
-        "apiKey":    $apiKey,
-        "agentId":   $agentId,
-        "autoRecall":  $recall,
-        "autoCapture": $capture
-      }
-    }
-    ' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
-
-    # 注册到 installs（供 openclaw 插件系统识别已安装的插件）
-    jq --arg now "$UTC_NOW" '
-       if .plugins.installs["memory-openviking"] == null then
-         .plugins.installs["memory-openviking"] = {
-           "source": "path",
-           "sourcePath": "/home/node/.openclaw/extensions/memory-openviking",
-           "installPath": "/home/node/.openclaw/extensions/memory-openviking",
-           "installedAt": $now
-         }
-       else . end
-    ' "$CONFIG_FILE" > "$tmp_file" && mv "$tmp_file" "$CONFIG_FILE"
-
-    PLUGINS_ENABLE_MAP["memory-openviking"]=1
-    log_success "已配置: OpenViking 长效记忆 (remote -> ${OV_BASE_URL})"
 fi
 
 # ---- 合并激活的插件白名单 (allow) ----
@@ -429,10 +389,8 @@ fi
 
 log_info "=== Kirklin's openclaw-pack 初始化完毕 ==="
 
-# 暴露 Bun
-export BUN_INSTALL="/usr/local"
-export PATH="$BUN_INSTALL/bin:$PATH"
 export DBUS_SESSION_BUS_ADDRESS=/dev/null
+export OPENCLAW_ALLOW_ROOT=1
 
 cleanup() {
     log_warn "接收到停止信号, 正在安全关闭 OpenClaw Gateway..."
@@ -452,7 +410,6 @@ echo ""
 
 # 使用 gosu 进行降权，用 node 用户跑网关应用
 gosu node env HOME=/home/node DBUS_SESSION_BUS_ADDRESS=/dev/null \
-    BUN_INSTALL="/usr/local" PATH="/usr/local/bin:$PATH" \
     openclaw gateway run \
     --bind "${OPENCLAW_GATEWAY_BIND:-lan}" \
     --port "${OPENCLAW_GATEWAY_PORT:-18789}" \
