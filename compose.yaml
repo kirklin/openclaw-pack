@@ -95,6 +95,7 @@ services:
       # Feishu
       BOT_FEISHU_APP_ID: ${BOT_FEISHU_APP_ID}
       BOT_FEISHU_SECRET: ${BOT_FEISHU_SECRET}
+      BOT_FEISHU_DM_POLICY: ${BOT_FEISHU_DM_POLICY:-pairing}
 
 
 
